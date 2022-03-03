@@ -4,17 +4,26 @@ import skimage.io as io
 from skimage import data_dir
 import os
 import sys
-#import fitz
+import fitz
 # from reportlab.lib.pagesizes import portrait
 # from reportlab.pdfgen import canvas
 from PIL import Image
-from paddleocr import PaddleOCR, draw_ocr
-import pandas as pd
 
-data = pd.read_csv('output.csv')
-output_excle = pd.DataFrame(data)
-png_str='./bills/*.png'
-
+def pdf2img(filename=r'./HDMI.pdf'):
+	#  打开PDF文件，生成一个对象
+	doc = fitz.open(filename)
+	print("共",doc.pageCount,"页")
+	for pg in range(doc.pageCount):
+		print("\r转换为图片",pg+1,"/",doc.pageCount,end="")
+		page = doc[pg]
+		rotate = int(0)
+		# 每个尺寸的缩放系数为8，这将为我们生成分辨率提高64倍的图像。
+		zoom_x = 8.0
+		zoom_y = 8.0
+		trans = fitz.Matrix(zoom_x, zoom_y).preRotate(rotate)
+		pm = page.getPixmap(matrix=trans, alpha=False)
+		pm.writePNG(r'./tu'+'{:02}.png' .format(pg))
+	print()
 
 def img_reshape(img_ori):
     GrayImage = cv2.cvtColor(img_ori, cv2.COLOR_BGR2GRAY)
@@ -36,49 +45,22 @@ def img_div(img_ori):
     # area1 = img[328:522,0:380] #名称
     # area2 = img[328:522,486:568] #单位
     # area3 = img[328:522,568:731] #数量
-    area0 = img[328:578, :748]
-    area1 = img[328:578, 750:]
+    area1 = img[328:578, :]
     area2 = img[:170, 980:]
     img_vector = []
-    img_vector.append(area0)
     img_vector.append(area1)
     img_vector.append(area2)
     return img_vector
-    #cv2.namedWindow('ss',0)
-    #cv2.imshow('ss', img)
-    #cv2.imshow('area1', area1)
-    #cv2.imshow('area2', area2)
-    #cv2.waitKey(0)
+    # cv2.imshow('ss', img)
+    # cv2.imshow('area1', area1)
+    # cv2.imshow('area2', area2)
+    # cv2.waitKey(0)
 
-def output_area2(result):
-    #points=[]
-    strs = []
-    i = 0
-    for line in result:
-        #points.append(line[0][0])
-        strs.append(list(line[1][0]))
-        #print(line[0])
-    #output_excle.
-    #print(points)
-    #print(strs)
-
-
-
-coll = io.ImageCollection(png_str)
-print(output_excle.head())
-for i in range(len(coll)):
-    img_vector = img_div(coll[i])
-    cv2.imwrite('./bills_temp/area0.png',img_vector[0])
-    cv2.imwrite('./bills_temp/area1.png',img_vector[1])
-    cv2.imwrite('./bills_temp/area2.png',img_vector[2])
-    ocr = PaddleOCR(use_angle_cls=True, lang="ch")
-    img_path = './bills_temp/area2.png'
-    #result = ocr.ocr(img_path, cls=True)
-    #output_area2(result)
-    
-#output_excel.to_excel('./result.xlsx')
-
+# str='./bills/*.png'
+# coll = io.ImageCollection(str)
+# for i in range(len(coll)):
+#     img_vector = img_div(coll[i])
 #     cv2.imshow('area1', img_vector[0])
 #     cv2.imshow('area2', img_vector[1])
 #     cv2.waitKey(0)
-#pdf2img()
+pdf2img()
